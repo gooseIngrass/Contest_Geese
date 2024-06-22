@@ -82,19 +82,16 @@ vector<int> convertUsingTables(vector<char>& input){
         convertedInput.push_back(ch);
     }
     return convertedInput;
-}
-
-
-map<char, int> countFreqs(const vector<char>& input){//Считаем сколько раз каждый символ встречается в инпуте
-    map<char, int> freq;
-
-    for(char byte : input){
-        ++freq[byte];
-
     }
-//    for(const auto& [ch, fr] : freq){
-//        printf("%c : %d\n", ch, fr);
-//    }
+
+
+map<char, int> countFreqs(FILE *input){//Считаем сколько раз каждый символ встречается в инпуте
+    map<char, int> freq;
+    char c;
+
+    while(fread(&c, 1, 1, input) == 1){
+        ++freq[c];
+    }
     return freq;
 
 }
@@ -152,31 +149,65 @@ Node* buildTree(vector<Node*>& tree){
     return tree[0]; //возвращаем корень дерева
 }
 
-void encodeNode(Node* node, string code,  map<char, string>& huffCodes){
+void encodeNode(Node* node, vector<bool> code,  map<char, vector<bool>>& huffCodes){
     if(node->left == nullptr && node->right == nullptr){
         huffCodes[node->data] = code;
     }
-    else{
-        encodeNode(node->right, code + "0", huffCodes);
 
+    else{       
+        code.push_back(0);
+        encodeNode(node->left, code, huffCodes);
 
-        encodeNode(node->left, code + "1", huffCodes);
-
-
+        code.pop_back();
+        
+        code.push_back(1);
+        encodeNode(node->right, code, huffCodes);
     }
 }
 
 
-map<char, string> genCodes(const vector<char>& input){
+map<char, vector<bool>> genCodes(FILE *input){
     map<char, int> freq = countFreqs(input);
     vector<Node*> tree = createLeafs(freq);
 
     Node* root = buildTree(tree);
-    map<char, string> huffCodes;
+    map<char, vector<bool>> huffTable;
 
-    encodeNode(root, "", huffCodes);
+    vector<bool> code;
+    encodeNode(root, code, huffTable);      
 
-    return huffCodes;
+    return huffTable;
+}
+
+int codesToOutput(map<char, vector<bool>> huffTable, FILE *input, FILE *output){
+    int count = 0;
+    char buf;
+    vector<bool>code;
+
+    rewind(input);
+    char c;
+
+    while(fread(&c, 1, 1, input) == 1){
+        code = huffTable[c];
+        
+        for(int i = 0; i < code.size(); i++){
+            buf = buf | code[i] << (7 - count);
+            count++;
+
+            if(count == 8) {
+                printf("%c\n", buf);
+                count = 0;
+                fwrite(&buf, sizeof(char), 1, output);
+                buf = 0;
+            }
+        }  
+
+        // for(bool b : code){
+        //     printf("%d", b);
+        // }
+    }
+    return 1;
+
 }
 
 

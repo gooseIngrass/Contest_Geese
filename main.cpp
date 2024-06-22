@@ -6,15 +6,26 @@
 int main(){
 
     string test = "33ABCDEABCD ABCDEABCD";
-    vector<char> huffTest = {test.begin(), test.end()};
-    vector<int> convetedInput = convertUsingTables(huffTest);
-    distanceCodeTable();
-//    map<char, int> freq = countFreqs(huffTest);
-//    vector<Node*> tree = createLeafs(freq);
-    map<char, string>huffCodes = genCodes(huffTest);
-//    vector<char>encodedData = encode(huffCodes, huffTest, tree);
-    for(auto& i : huffCodes){
-        printf("%c : %s\n", i.first, i.second.c_str());
-    }
+    FILE *input = fopen("test_input.txt", "rb");
+    if (!input) return 1;
+
+    map<char, vector<bool>> huffCodes = genCodes(input);
+
+    // for(const auto& [c, code] : huffCodes){
+    //     printf("%c : ", c);
+    //     for(bool b : code){
+    //         printf("%d", b);
+    //     }
+    //     printf("\n");
+    // }
+
+    FILE *output = fopen("test_output.bin", "wb");
+    if(!output) return 1;
+
+
+    codesToOutput(huffCodes, input, output);
+
+    fclose(input);
+    fclose(output);
     return 0;
 }
