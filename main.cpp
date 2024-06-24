@@ -2,20 +2,14 @@
 #include <vector>
 #include <filesystem>
 #include <map>
+#include <string.h>
 #include "huffman.cpp"
+#include "huffman_decoder.cpp"
+
 
 int main(int argc, char *argv[]){
-    FILE *input = fopen(argv[1], "rb");
-    if (!input) return 1;
+    writeGenCodes(argv[1], "archived.bin");
+//    fileDecoder("archived.bin", "decoded.txt");
 
-    FILE *output = fopen("archived.bin", "wb");
-    if(!output) return 1;
-
-    map<char, vector<bool>> huffCodes = genCodes(input); //Генерируем таблицу кодов
-
-    codesToOutput(huffCodes, input, output); //Кодируем файл
-
-    fclose(input);
-    fclose(output);
     return 0;
 }

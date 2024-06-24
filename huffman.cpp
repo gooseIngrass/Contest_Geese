@@ -80,31 +80,23 @@ void encodeNode(Node* node, vector<bool> code,  map<char, vector<bool>>& huffCod
     }
 }
 
-
-map<char, vector<bool>> genCodes(FILE *input){ //Создаём таблицу кодов Хаффмана
-    map<char, int> freq = countFreqs(input);
-    vector<Node*> tree = createLeafs(freq);
-
-    Node* root = buildTree(tree);
-    map<char, vector<bool>> huffTable;
-
-    vector<bool> code;
-    encodeNode(root, code, huffTable);      
-
-    return huffTable;
-}
-
-int codesToOutput(map<char, vector<bool>> huffTable, FILE *input, FILE *output){ //Переписываем исходный файл в соответствии с таблицей кодов
+int codesToOutput( vector<Node*> tree, map<char, vector<bool>> huffTable, FILE *input, FILE *output){ //Переписываем исходный файл в соответствии с таблицей кодов
     int count = 0;
-    char buf;
+    char buf, c;
     vector<bool>code;
 
     rewind(input);
-    char c;
+
+    int treeSize = tree.size();
+    fwrite(&treeSize, sizeof(treeSize), 1, output); //Записываем размер дерева
+
+    for(auto i : tree){
+        fwrite(&i, sizeof(i), 1, output); // Записываем дерево в файл для декодера
+    }
 
     while(fread(&c, 1, 1, input) == 1){ //Считываем посимвольно
         code = huffTable[c]; //Получаем код символа
-        
+
         for(int i = 0; i < code.size(); i++){  //Упаковываем код в байт и записываем его в файл
             buf = buf | code[i] << (7 - count);
             count++;
@@ -119,6 +111,38 @@ int codesToOutput(map<char, vector<bool>> huffTable, FILE *input, FILE *output){
     return 1;
 
 }
+
+
+int writeGenCodes(char *inputFN, char *outFN){ //Создаём таблицу кодов Хаффмана
+    FILE *input = fopen(inputFN, "rb");
+    if (!input) {
+        printf("File doesnt exist");
+        return 404;
+    }
+
+    FILE *output = fopen(outFN, "wb");
+    if(!output){
+        printf("File doesnt exist");
+        return 404;
+    }
+
+    map<char, int> freq = countFreqs(input);
+    vector<Node*> tree = createLeafs(freq);
+
+    Node* root = buildTree(tree);
+    map<char, vector<bool>> huffTable;
+
+    vector<bool> code;
+    encodeNode(root, code, huffTable);
+
+    codesToOutput(tree, huffTable, input, output);
+
+    fclose(input);
+    fclose(output);
+    return 1;
+}
+
+
 
 
 
