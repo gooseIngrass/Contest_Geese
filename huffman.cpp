@@ -60,7 +60,6 @@ Node* buildTree(vector<Node*>& tree){
         tree.push_back(parent);
         tree.erase(tree.begin(), tree.begin() + 2);
     }
-
     return tree[0]; //возвращаем корень дерева
 }
 
@@ -80,17 +79,15 @@ void encodeNode(Node* node, vector<bool> code,  map<char, vector<bool>>& huffCod
     }
 }
 
-int codesToOutput( vector<Node*> tree, map<char, vector<bool>> huffTable, FILE *input, FILE *output){ //Переписываем исходный файл в соответствии с таблицей кодов
+int codesToOutput( vector<Node*>& tree, size_t treeSize, map<char, vector<bool>> huffTable, FILE *input, FILE *output){ //Переписываем исходный файл в соответствии с таблицей кодов
     int count = 0;
     char buf, c;
     vector<bool>code;
 
     rewind(input);
 
-    int treeSize = tree.size();
     fwrite(&treeSize, sizeof(treeSize), 1, output); //Записываем размер дерева
-
-    for(auto i : tree){
+    for(Node* i : tree){
         fwrite(&i, sizeof(i), 1, output); // Записываем дерево в файл для декодера
     }
 
@@ -113,21 +110,24 @@ int codesToOutput( vector<Node*> tree, map<char, vector<bool>> huffTable, FILE *
 }
 
 
-int writeGenCodes(char *inputFN, char *outFN){ //Создаём таблицу кодов Хаффмана
+int writeGenCodes(char *inputFN, char *outFN){ //Создаём таблицу кодов Хаффмана и кодируем файл
     FILE *input = fopen(inputFN, "rb");
     if (!input) {
-        printf("File doesnt exist");
+        printf("File doesn't exist");
         return 404;
     }
 
     FILE *output = fopen(outFN, "wb");
     if(!output){
-        printf("File doesnt exist");
+        printf("File doesn't exist");
         return 404;
     }
 
     map<char, int> freq = countFreqs(input);
     vector<Node*> tree = createLeafs(freq);
+
+    int treeSize = tree.size();
+    vector<Node*> origTree = tree;
 
     Node* root = buildTree(tree);
     map<char, vector<bool>> huffTable;
@@ -135,7 +135,7 @@ int writeGenCodes(char *inputFN, char *outFN){ //Создаём таблицу �
     vector<bool> code;
     encodeNode(root, code, huffTable);
 
-    codesToOutput(tree, huffTable, input, output);
+    codesToOutput(origTree, treeSize, huffTable, input, output);
 
     fclose(input);
     fclose(output);
